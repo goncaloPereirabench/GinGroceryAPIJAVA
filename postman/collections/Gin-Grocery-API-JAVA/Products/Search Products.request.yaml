@@ -1,0 +1,7 @@
+$kind: http-request
+method: GET
+url: 'http://localhost:8080/products/search'
+order: 6000
+queryParams:
+  - key: name
+    value: apple

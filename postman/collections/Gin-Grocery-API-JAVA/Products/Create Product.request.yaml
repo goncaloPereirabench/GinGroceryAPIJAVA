@@ -1,0 +1,15 @@
+$kind: http-request
+method: POST
+url: 'http://localhost:8080/products'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Apple",
+      "price": 1.99,
+      "categoryId": 1
+    }

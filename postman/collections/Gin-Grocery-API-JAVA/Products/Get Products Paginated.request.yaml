@@ -1,0 +1,11 @@
+$kind: http-request
+method: GET
+url: 'http://localhost:8080/products/paginated'
+order: 7000
+queryParams:
+  - key: page
+    value: '0'
+  - key: size
+    value: '5'
+  - key: sortBy
+    value: id

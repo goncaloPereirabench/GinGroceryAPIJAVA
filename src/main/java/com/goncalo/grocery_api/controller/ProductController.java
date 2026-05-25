@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.goncalo.grocery_api.dto.ProductRequestDTO;
@@ -17,7 +18,14 @@ import com.goncalo.grocery_api.dto.ProductResponseDTO;
 import com.goncalo.grocery_api.model.Product;
 import com.goncalo.grocery_api.service.ProductService;
 
+import jakarta.validation.Valid;
+
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.goncalo.grocery_api.mapper.ProductMapper;
+
 @RestController
+@RequestMapping("/products")
 public class ProductController {
 
     private final ProductService productService;
@@ -26,83 +34,107 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @GetMapping("/products")
-    public List<ProductResponseDTO> getProducts() {
-        return productService.getAllProducts()
-            .stream()
-            .map(product -> new ProductResponseDTO(
-                    product.getId(),
-                    product.getName(),
-                    product.getPrice()
-            ))
-            .toList();
-    }
-    
-@GetMapping("/products/{id}")
-   public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable Long id) {
-
-    Product product = productService.getProductById(id);
-
-    ProductResponseDTO response = new ProductResponseDTO(
-            product.getId(),
-            product.getName(),
-            product.getPrice()
-    );
-
-    return ResponseEntity.ok(response);
-}
-
-     @PostMapping("/products")
-   public ResponseEntity<ProductResponseDTO> createProduct(
-        @RequestBody ProductRequestDTO request
-) {
-
-    Product createdProduct = productService.createProduct(
-            request.getName(),
-            request.getPrice()
-    );
-
-    ProductResponseDTO response = new ProductResponseDTO(
-            createdProduct.getId(),
-            createdProduct.getName(),
-            createdProduct.getPrice()
-    );
-
-    return ResponseEntity.status(HttpStatus.CREATED).body(response); 
-}
-
-@PutMapping("/products/{id}")
-public ResponseEntity<ProductResponseDTO> updateProduct(
-        @PathVariable Long id,
-        @RequestBody ProductRequestDTO request
-) {
-
-    Product updatedProduct = productService.updateProduct(
-            id,
-            new Product(null, request.getName(), request.getPrice())
-    );
-
-    if (updatedProduct == null) {
-        return ResponseEntity.notFound().build();
+    @GetMapping
+    public ResponseEntity<List<ProductResponseDTO>> getProducts() {
+        return ResponseEntity.ok(productService.getAllProductResponses());
     }
 
-    ProductResponseDTO response = new ProductResponseDTO(
-            updatedProduct.getId(),
-            updatedProduct.getName(),
-            updatedProduct.getPrice()
-    );
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getProductResponseById(id));
+    }
 
-    return ResponseEntity.ok(response);
-}
+    @PostMapping
+    public ResponseEntity<ProductResponseDTO> createProduct(
+            @Valid @RequestBody ProductRequestDTO request
+    ) {
 
-    @DeleteMapping("/products/{id}")
+        Product createdProduct = productService.createProduct(
+                request.getName(),
+                request.getPrice(),
+                request.getCategoryId()
+        );
+
+        ProductResponseDTO response = ProductMapper.toResponseDTO(createdProduct);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductResponseDTO> updateProduct(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductRequestDTO request
+    ) {
+
+        Product updatedProduct = productService.updateProduct(
+                id,
+                request.getName(),
+                request.getPrice(),
+                request.getCategoryId()
+        );
+
+        if (updatedProduct == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ProductResponseDTO response = ProductMapper.toResponseDTO(updatedProduct);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
     public ResponseEntity<Boolean> deleteProduct(@PathVariable Long id) {
-         boolean deleted = productService.deleteProduct(id);
+        boolean deleted = productService.deleteProduct(id);
 
-    if (!deleted) {
-        return ResponseEntity.notFound().build();
+        if (!deleted) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.noContent().build();
     }
 
-    return ResponseEntity.noContent().build();
+    @GetMapping("/search")
+    public ResponseEntity<List<ProductResponseDTO>> searchProducts(
+            @RequestParam String name
+    ) {
+        return ResponseEntity.ok(productService.searchProductResponsesByName(name));
+    }
+
+    @GetMapping("/paginated")
+    public ResponseEntity<List<ProductResponseDTO>> getProductsPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "id") String sortBy
+    ) {
+        return ResponseEntity.ok(
+                productService.getPaginatedProductResponses(page, size, sortBy)
+        );
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<ProductResponseDTO>> getProductsByMinPrice(
+            @RequestParam Double minPrice
+    ) {
+        return ResponseEntity.ok(productService.getProductsByMinPrice(minPrice));
+    }
+
+    @GetMapping("/advanced-search")
+    public ResponseEntity<List<ProductResponseDTO>> advancedSearch(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice
+    ) {
+        return ResponseEntity.ok(
+                productService.searchProducts(name, minPrice, maxPrice)
+        );
+    }
+
+    @GetMapping("/native/by-category")
+    public ResponseEntity<List<ProductResponseDTO>> getProductsByCategoryNameNative(
+            @RequestParam String categoryName
+    ) {
+        return ResponseEntity.ok(
+                productService.getProductsByCategoryNameNative(categoryName)
+        );
     }
 }

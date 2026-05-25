@@ -1,0 +1,5 @@
+$kind: collection
+name: Gin Grocery API-JAVA
+variables:
+  - key: base_url
+    value: 'http://localhost:8080'

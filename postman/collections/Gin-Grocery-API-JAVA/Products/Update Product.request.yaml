@@ -1,0 +1,15 @@
+$kind: http-request
+method: PUT
+url: 'http://localhost:8080/products/1'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Green Apple",
+      "price": 2.49,
+      "categoryId": 1
+    }

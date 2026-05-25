@@ -5,11 +5,8 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class ProductResponseDTO {
+public class CategoryResponseDTO {
 
     private Long id;
     private String name;
-    private Double price;
-    private Long categoryId;
-    private String categoryName;
 }
